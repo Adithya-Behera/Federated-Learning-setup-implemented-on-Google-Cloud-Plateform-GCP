@@ -8,7 +8,7 @@ import tensorflow as tf
 from model import simple_model_LSTM, simple_model_GRU, simple_model_BiLSTM, create_attention_model_GRU, create_dataset, apply_kalman_filter
 from config import EPOCHS, UNITS, SERVER_ADDRESS
 DATA_DIR="./azure"
-WINDOW_SIZE =60
+WINDOW_SIZE =5
 class TimeSeriesClient(fl.client.NumPyClient):
     def __init__(self, client_id):
         self.client_id = client_id
@@ -16,10 +16,8 @@ class TimeSeriesClient(fl.client.NumPyClient):
         input_shape = (WINDOW_SIZE, 1)
 
         # Choose the model to use
-        self.model_type = 'attention_gru'  # Options: 'attention_gru', 'lstm', 'gru', 'bilstm'
-        if self.model_type == 'attention_gru':
-            self.model = create_attention_model_GRU(input_shape, UNITS)
-        elif self.model_type == 'lstm':
+        self.model_type = 'gru'  # Options:'lstm', 'gru', 'bilstm'
+        if self.model_type == 'lstm':
             self.model = simple_model_LSTM(input_shape, UNITS)
         elif self.model_type == 'gru':
             self.model = simple_model_GRU(input_shape, UNITS)
@@ -40,10 +38,6 @@ class TimeSeriesClient(fl.client.NumPyClient):
         data = df.values
         scaler = MinMaxScaler(feature_range=(0, 1))
         data = scaler.fit_transform(data)
-
-        # Apply Kalman filter only for the Attention-based GRU model
-        if self.model_type == 'attention_gru':
-            data = apply_kalman_filter(data)
 
         return data, scaler
 
